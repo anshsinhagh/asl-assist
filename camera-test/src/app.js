@@ -6,6 +6,9 @@ import {
   recordAndTranscribe 
 } from './speech.js';
 
+// Import sign language mapping
+import { textToSignImages, SIGN_IMAGE_BASE_PATH } from './signMapping.js';
+
 const video = document.getElementById("camera");
 const startBtn = document.getElementById("start");
 const speechControls = document.getElementById("speech-controls");
@@ -44,7 +47,7 @@ async function handleStartRecording() {
     recordBtn.classList.add("recording");
     stopBtn.classList.remove("hidden");
     transcriptionDiv.classList.add("hidden");
-    transcriptionDiv.textContent = "";
+    transcriptionDiv.innerHTML = "";
   } catch (err) {
     console.error('Failed to start recording:', err);
     alert('Failed to start audio recording: ' + err.message);
@@ -73,10 +76,9 @@ async function handleStopAndTranscribe() {
     stopBtn.disabled = false;
     
     if (text) {
-      transcriptionDiv.textContent = text;
-      transcriptionDiv.classList.remove("hidden");
+      displaySignLanguage(text);
     } else {
-      transcriptionDiv.textContent = "No speech detected or transcription failed.";
+      transcriptionDiv.innerHTML = "<p>No speech detected or transcription failed.</p>";
       transcriptionDiv.classList.remove("hidden");
     }
     
@@ -93,6 +95,63 @@ async function handleStopAndTranscribe() {
     stopBtn.disabled = false;
     recordingController = null;
   }
+}
+
+// Function to display sign language images
+function displaySignLanguage(text) {
+  const signData = textToSignImages(text);
+  
+  // Clear previous content
+  transcriptionDiv.innerHTML = "";
+  
+  // Create container for sign images
+  const signContainer = document.createElement("div");
+  signContainer.className = "sign-container";
+  
+  let foundSigns = 0;
+  let missingWords = [];
+  
+  signData.forEach(({ word, imagePath }) => {
+    if (imagePath) {
+      // Create image element for sign
+      const img = document.createElement("img");
+      img.src = imagePath;
+      img.alt = word;
+      img.className = "sign-image";
+      img.title = word; // Show word on hover
+      
+      // Handle image load errors
+      img.onerror = function() {
+        this.style.display = "none";
+        // Fallback: show word if image not found
+        const fallback = document.createElement("span");
+        fallback.className = "sign-fallback";
+        fallback.textContent = word;
+        signContainer.appendChild(fallback);
+      };
+      
+      signContainer.appendChild(img);
+      foundSigns++;
+    } else {
+      missingWords.push(word);
+    }
+  });
+  
+  // Add container to transcription div
+  transcriptionDiv.appendChild(signContainer);
+  
+  // Show missing words if any (for debugging/feedback)
+  if (missingWords.length > 0) {
+    const missingDiv = document.createElement("div");
+    missingDiv.className = "missing-words";
+    missingDiv.innerHTML = `<small>Words not in mapping: ${missingWords.join(", ")}</small>`;
+    transcriptionDiv.appendChild(missingDiv);
+  }
+  
+  // Show the transcription area
+  transcriptionDiv.classList.remove("hidden");
+  
+  console.log(`Displayed ${foundSigns} signs, ${missingWords.length} words not mapped`);
 }
 
 // Wire up button event listeners
