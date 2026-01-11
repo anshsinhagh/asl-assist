@@ -3,17 +3,24 @@ import {
   startRecording, 
   stopRecording, 
   speechToText, 
-  recordAndTranscribe 
+  recordAndTranscribe,
+  speakText
 } from './speech.js';
 
 // Import sign language mapping
-import { textToSignImages, SIGN_IMAGE_BASE_PATH } from './signMapping.js';
+import { 
+  textToSignImages, 
+  SIGN_IMAGE_BASE_PATH,
+  getRandomWords,
+  getSignImagePath
+} from './signMapping.js';
 
 const video = document.getElementById("camera");
 const startBtn = document.getElementById("start");
 const speechControls = document.getElementById("speech-controls");
 const recordBtn = document.getElementById("record-btn");
 const stopBtn = document.getElementById("stop-btn");
+const randomSignsBtn = document.getElementById("random-signs-btn");
 const transcriptionDiv = document.getElementById("transcription");
 
 let recordingController = null;
@@ -154,6 +161,46 @@ function displaySignLanguage(text) {
   console.log(`Displayed ${foundSigns} signs, ${missingWords.length} words not mapped`);
 }
 
+// Function to generate and display random ASL sequence
+async function handleRandomSignSequence() {
+  try {
+    // Disable button while processing
+    randomSignsBtn.disabled = true;
+    randomSignsBtn.textContent = "Generating...";
+    
+    // Get random words (5-8 words)
+    const wordCount = Math.floor(Math.random() * 4) + 5; // 5-8 words
+    const randomWords = getRandomWords(wordCount);
+    
+    console.log('Random words:', randomWords);
+    
+    // Build text from words
+    const text = randomWords.join(' ');
+    
+    // Display the sign images
+    displaySignLanguage(text);
+    
+    // Convert to speech and play
+    try {
+      await speakText(text);
+      console.log('Finished speaking random sequence');
+    } catch (err) {
+      console.error('Error speaking text:', err);
+      alert('Failed to generate speech: ' + err.message);
+    }
+    
+    // Re-enable button
+    randomSignsBtn.disabled = false;
+    randomSignsBtn.textContent = "Random ASL Sequence";
+  } catch (err) {
+    console.error('Error generating random sequence:', err);
+    alert('Failed to generate random sequence: ' + err.message);
+    randomSignsBtn.disabled = false;
+    randomSignsBtn.textContent = "Random ASL Sequence";
+  }
+}
+
 // Wire up button event listeners
 recordBtn.addEventListener("click", handleStartRecording);
 stopBtn.addEventListener("click", handleStopAndTranscribe);
+randomSignsBtn.addEventListener("click", handleRandomSignSequence);
