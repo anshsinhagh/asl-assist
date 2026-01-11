@@ -128,7 +128,62 @@ button:active {
 }
 
 .transcription:empty::before {
-  content: "Transcription will appear here...";
+  content: "Sign language images will appear here...";
   color: rgba(255, 255, 255, 0.5);
   font-style: italic;
+}
+
+/* Sign language image container */
+.sign-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+}
+
+/* Individual sign images */
+.sign-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sign-image:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+  z-index: 10;
+  position: relative;
+}
+
+/* Fallback for words without images */
+.sign-fallback {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 2px;
+}
+
+/* Missing words notice */
+.missing-words {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+/* Update transcription container for better image display */
+.transcription {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
