@@ -181,6 +181,31 @@ button:active {
   font-size: 12px;
 }
 
+/* Button group for multiple buttons */
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Random signs button */
+#random-signs-btn {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+  position: relative;
+  margin: 0;
+}
+
+#random-signs-btn:hover {
+  background: rgba(59, 130, 246, 1);
+}
+
+#random-signs-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Update transcription container for better image display */
 .transcription {
   max-height: 400px;

@@ -138,11 +138,110 @@ async function recordAndTranscribe(durationMs = null, transcriptionOptions = {})
   }
 }
 
+/**
+ * Convert text to speech using ElevenLabs API
+ * @param {string} text - Text to convert to speech
+ * @param {Object} options - TTS options
+ * @returns {Promise<Blob>} - Audio blob
+ */
+async function textToSpeech(text, options = {}) {
+  if (!elevenlabs) {
+    throw new Error('ElevenLabs API key not configured. Set VITE_ELEVENLABS_API_KEY environment variable.');
+  }
+
+  if (!text || text.trim().length === 0) {
+    throw new Error('Text cannot be empty');
+  }
+
+  try {
+    // Use ElevenLabs text-to-speech API
+    // The convert method returns a stream, we need to convert it to a blob
+    const audioStream = await elevenlabs.textToSpeech.convert(
+      options.voiceId || "21m00Tcm4TlvDq8ikWAM", // Default voice (Rachel)
+      {
+        text: text,
+        model_id: options.modelId || "eleven_monolingual_v1",
+        voice_settings: {
+          stability: options.stability ?? 0.5,
+          similarity_boost: options.similarityBoost ?? 0.75,
+          style: options.style ?? 0.0,
+          use_speaker_boost: options.useSpeakerBoost ?? true
+        }
+      }
+    );
+
+    // Convert stream to blob
+    const chunks = [];
+    const reader = audioStream.getReader();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    
+    // Combine chunks into a single Uint8Array, then create blob
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const combined = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    return new Blob([combined], { type: 'audio/mpeg' });
+  } catch (err) {
+    console.error('Error in text-to-speech conversion:', err);
+    throw err;
+  }
+}
+
+/**
+ * Play audio blob in the browser
+ * @param {Blob} audioBlob - Audio blob to play
+ */
+function playAudio(audioBlob) {
+  return new Promise((resolve, reject) => {
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      resolve();
+    };
+    
+    audio.onerror = (err) => {
+      URL.revokeObjectURL(audioUrl);
+      reject(err);
+    };
+    
+    audio.play().catch(reject);
+  });
+}
+
+/**
+ * Convert text to speech and play it
+ * @param {string} text - Text to speak
+ * @param {Object} options - TTS options
+ */
+async function speakText(text, options = {}) {
+  try {
+    const audioBlob = await textToSpeech(text, options);
+    await playAudio(audioBlob);
+  } catch (err) {
+    console.error('Error speaking text:', err);
+    throw err;
+  }
+}
+
 // Export functions for use in other modules
 export {
   startRecording,
   stopRecording,
   speechToText,
   recordAndTranscribe,
-  initAudioRecording
+  initAudioRecording,
+  textToSpeech,
+  playAudio,
+  speakText
 };
